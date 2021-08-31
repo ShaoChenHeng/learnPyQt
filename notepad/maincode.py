@@ -196,8 +196,79 @@ class Demo(QMainWindow):
                     self.text_edit.clear()
                     self.text_edit.setText(f.read())
                     self.is_saved = True
+    def save_func(self, text):
+        if self.is_saved_first:
+            self.save_as_func(text)
+        else:
+            with open(self.path, 'w') as f:
+                f.write(text)
+            self.is_saved = True
 
+    def save_as_func(self, text):
+        self.path, _ = QFileDialog.getSaveFileName(self, 'Save File', './', 'Files (*.html *.txt *.log)')
+        if self.path:
+            with open(self.path, 'w') as f:
+                f.write(text)
+            self.is_saved = True
+            self.is_saved_first = False
 
+    def close_func(self):
+        if not self.is_saved:
+            choice = QMessageBox.question(self, 'Save File', 'Do you want to save the text?',
+                                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if choice == QMessageBox.Yes:
+                self.save_func(self.text_edit.toHtml())
+                self.close()
+            elif choice == QMessageBox.No:
+                self.close()
+            else:
+                pass
+
+    def closeEvent(self, QCloseEvent):
+        if not self.is_saved:
+            choice = QMessageBox.question(self, 'Save File', 'Do you want to save the text?',
+                                            QMessageBox.Yes | QMessageBox.No | QMessageBox.Cancel)
+            if choice == QMessageBox.Yes:
+                self.save_func(self.text_edit.toHtml())
+                QCloseEvent.accept()
+            elif choice == QMessageBox.No:
+                QCloseEvent.accept()
+            else:
+                QCloseEvent.ignore()
+
+    def cut_func(self):
+        self.mime_data.setHtml(self.text_edit.textCursor().selection().toHtml())
+        self.clipboard.setMimeData(self.mime_data)
+        self.text_edit.textCursor().removeSelectedText()
+
+    def copy_func(self):
+        self.mime_data.setHtml(self.text_edit.textCursor().selection().toHtml())
+        self.clipboard.setMimeData(self.mime_data)
+
+    def paste_func(self):
+        self.text_edit.insertHtml(self.clipboard.mimeData().html())
+
+    def font_func(self):
+        font, ok = QFontDialog.getFont()
+        if ok:
+            self.text_edit.setFont(font)
+
+    def color_func(self):
+        color = QColorDialog.getColor()
+        if color.isValid():
+            self.text_edit.setTextColor(color)
+
+    def about_func(self):
+        QMessageBox.aboutQt(self, 'About Qt')
+
+    def text_edit_int(self):
+        self.text_edit.textChanged.connect(self.text_changed_func)
+
+    def text_changed_func(self):
+        if self.text_edit.toPlainText():
+            self.is_saved = False
+        else:
+            self.is_saved = True
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
